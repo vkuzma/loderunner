@@ -5,13 +5,14 @@ public class Player : MonoBehaviour {
 
 	private float movementX;
 	private float movementY;
-	private float maxSpeed = 1.5f;
-	private float moveForce = 50f;
 
 	private int groundMask  = 1 << 8;
 	private int ladderMask = 1 << 9;
 
 	private int ladderEntered = 0;
+	private float ladderHitArea = 0.08f;
+
+	private Animator animator;
 
 	private RaycastHit2D lastLadderHit;
 
@@ -20,6 +21,8 @@ public class Player : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		boxCollider2D = (BoxCollider2D) collider2D;
+
+		animator = GetComponent<Animator>();
 	}
 	
 	// Update is called once per frame
@@ -28,17 +31,30 @@ public class Player : MonoBehaviour {
 
 		xa.isFalling = true;
 
-		if(xa.isRight)
+		if(xa.isRight) {
 			xa.leftBlocked = false;
-		if(xa.isLeft)
+			animator.SetBool("walk", true);
+			if(!xa.facingRight)
+				Flip();
+			xa.facingRight = true;
+		}
+		else if(xa.isLeft) {
 			xa.rightBlocked = false;
+			animator.SetBool("walk", true);
+
+			if(xa.facingRight)
+				Flip();
+
+			xa.facingRight = false;
+		}
+		else {
+			animator.SetBool("walk", false);
+		}
 
 		if(xa.isBeforeLadder &&	xa.isUp) {
 			xa.isOnLadder = true;
 		}
-		else if(xa.isOnTopOfLadder && xa.isDown) {
-			xa.isOnLadder = true;
-		}
+	
 		// is not before ladder
 		else if(!xa.isBeforeLadder){
 			xa.isOnLadder = false;
@@ -56,6 +72,7 @@ public class Player : MonoBehaviour {
 		if(xa.bottomBlocked) {
 			xa.isFalling = false;
 		}
+
 
 		UpdateMovement();
 	}
@@ -87,15 +104,16 @@ public class Player : MonoBehaviour {
 		xa.lastMoveX = movementX * Time.deltaTime;
 		xa.lastMoveY = movementY * Time.deltaTime;
 		transform.position = new Vector2(transform.position.x + xa.lastMoveX, transform.position.y + xa.lastMoveY);
+	}
 
-		if(movementY == 0f && xa.isOnLadder) {
-//			rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, 0f);
-		}
+	void SnapToLadder() {
 
-		// stop player immediatly
-		if(movementX == 0f) {
-//			rigidbody2D.velocity = new Vector2(0f, rigidbody2D.velocity.y);
-		}
+	}
+
+	void Flip() {
+		Vector3 theScale = transform.localScale;
+		theScale.x *= -1;
+		transform.localScale = theScale;
 	}
 
 	void updateRaycast() {
@@ -111,7 +129,7 @@ public class Player : MonoBehaviour {
 				transform.position = new Vector2(transform.position.x, hitBottom.collider.transform.position.y + boxCollider2D.size.y);
 			}
 		}
-		if(xa.isUp) {
+		if(xa.isUp && xa.isBeforeLadder) {
 			RaycastHit2D hitLadder = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y - boxCollider2D.size.y / 2), Vector2.up, rayLengthY, ladderMask);
 			
 			// ground hit
@@ -125,24 +143,25 @@ public class Player : MonoBehaviour {
 				lastLadderHit = hitLadder;
 			}
 		}
+		// is on top of a ladder
 		if(xa.isDown && !xa.isOnLadder) {
-			RaycastHit2D hitLadder = Physics2D.Raycast(transform.position, -Vector2.up, boxCollider2D.size.y, ladderMask);
-			Debug.Log("down");
-			// ground hit
+
+			RaycastHit2D hitLadder = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y - 0.3f), -Vector2.up, boxCollider2D.size.y, ladderMask);
+			// top ladder hit
 			if (hitLadder) {
+				Debug.Log ("hit");
 				xa.bottomBlocked = false;
 				xa.isOnLadder = true;
-				Debug.Log ("OK");
 			}
 		}
-		if(xa.isRight && !xa.rightBlocked) {
+		if(xa.isRight && !xa.rightBlocked && !xa.isOnLadder) {
 			RaycastHit2D hitRight = Physics2D.Raycast(transform.position, Vector2.right, rayLengthY, groundMask);
 			if (hitRight) {
 				xa.rightBlocked = true;
 				transform.position = new Vector2(hitRight.collider.transform.position.x - ((BoxCollider2D)hitRight.collider).size.x, transform.position.y);
 			}
 		}
-		if(xa.isLeft && !xa.leftBlocked) {
+		if(xa.isLeft && !xa.leftBlocked && !xa.isOnLadder) {
 			RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, -Vector2.right, rayLengthY, groundMask);
 			if (hitLeft) {
 				xa.leftBlocked = true;
@@ -153,22 +172,32 @@ public class Player : MonoBehaviour {
 	}
 	
 	void OnTriggerStay2D (Collider2D other) {
-
+		if(other.CompareTag("Ladder")) {
+			if(ladderEntered > 0) {
+				float ladderCenter = other.transform.position.x + ((BoxCollider2D) other.transform.collider2D).size.x / 2f;
+				float playerCenter = transform.position.x + boxCollider2D.size.x / 2f;
+				if(Mathf.Abs(ladderCenter - playerCenter) < ladderHitArea) {
+					xa.isBeforeLadder = true;
+				}
+				else {
+					xa.isBeforeLadder = false;
+				}
+			}
+		}
 	}
 	
 	void OnTriggerEnter2D (Collider2D other) {
 		if(other.CompareTag("Ladder")) {
 			ladderEntered += 1;
-			if(ladderEntered > 0)
-				xa.isBeforeLadder = true;
 		}
 	}
 
 	void OnTriggerExit2D (Collider2D other) {
 		if(other.CompareTag("Ladder")) {
 			ladderEntered -= 1;
-			if(ladderEntered == 0)
+			if(ladderEntered == 0) {
 				xa.isBeforeLadder = false;
+			}
 		}
 	}
 }

@@ -8,11 +8,11 @@ public class xa : MonoBehaviour {
 
 	public static bool isBeforeLadder;
 	public static bool isOnLadder;
-	public static bool isOnTopOfLadder;
 
 	public static bool bottomBlocked;
 	public static bool rightBlocked;
 	public static bool leftBlocked;
+	public static bool facingRight;
 
 	public static bool isUp;
 	public static bool isDown;
@@ -27,7 +27,7 @@ public class xa : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+		facingRight = true;
 	}
 	
 	// Update is called once per frame
