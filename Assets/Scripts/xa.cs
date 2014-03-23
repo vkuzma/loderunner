@@ -9,6 +9,9 @@ public class xa : MonoBehaviour {
 	public static bool isBeforeLadder;
 	public static bool isOnLadder;
 
+	public static bool isBeforeRope;
+	public static bool isOnRope;
+
 	public static bool bottomBlocked;
 	public static bool rightBlocked;
 	public static bool leftBlocked;
@@ -19,6 +22,9 @@ public class xa : MonoBehaviour {
 	public static bool isLeft;
 	public static bool isRight;
 
+	public static bool shoot;
+	public static bool isShooting;
+
 	public static bool isFalling;
 
 	public static float lastMoveX;
@@ -28,15 +34,17 @@ public class xa : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		facingRight = true;
+		isShooting = false;
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 
 		isLeft = false;
 		isRight = false;
 		isUp = false;
 		isDown = false;
+		shoot = false;
 
 		if(Input.GetKey(KeyCode.LeftArrow)) {
 			isLeft = true;	
@@ -49,6 +57,9 @@ public class xa : MonoBehaviour {
 		}
 		if(Input.GetKey(KeyCode.DownArrow)) {
 			isDown = true;	
+		}
+		if(Input.GetKey(KeyCode.Space)) {
+			shoot = true;	
 		}
 	}
 }
