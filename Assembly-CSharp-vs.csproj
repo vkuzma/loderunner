@@ -53,6 +53,7 @@
      <Compile Include="Assets\Scripts\PickupController.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\Shoot.cs" />
+     <Compile Include="Assets\Scripts\StartGuiController.cs" />
      <Compile Include="Assets\Scripts\xa.cs" />
      <None Include="Assets\Levels\01.txt" />
   </ItemGroup>
